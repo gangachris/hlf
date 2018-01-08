@@ -21,11 +21,17 @@
 package cmd
 
 import (
-	"os/exec"
-	"fmt"
 	"errors"
+	"fmt"
+	"os/exec"
 
 	"github.com/spf13/cobra"
+	// "github.com/fatih/color"
+)
+
+const (
+	minimumDockerVersion        = 17.03
+	minimumDockerComposeVersion = 1.8
 )
 
 // downloadCmd represents the download command
@@ -73,17 +79,42 @@ func init() {
 }
 
 func dockerInstalled() error {
+	// check if docker is installed
 	dockerCMD := exec.Command("docker")
 	if err := dockerCMD.Run(); err != nil {
 		return fmt.Errorf("Error running docker, please make sure docker is installed: %s", err.Error())
 	}
 
+	// check if docker daemon is running
 	dockerPsCMD := exec.Command("docker", "ps")
 	if err := dockerPsCMD.Run(); err != nil {
 		// Docker error string whenever you run docker ps
 		dockerErrorString := "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?"
 		return errors.New(dockerErrorString)
 	}
+
+	// check docker version
+	dockerVersionCmdOutput, err := exec.Command("docker", "version", "--format", "{{.Server.Version}}").Output()
+	if err != nil {
+		return fmt.Errorf("error checking docker version: %s", err.Error())
+	}
+
+	dockerVersion, err := retrieveVersionFromString(dockerVersionCmdOutput)
+	if err != nil {
+		return fmt.Errorf("error parsing docker version: %s", err.Error())
+	}
+
+	if dockerVersion < minimumDockerVersion {
+		return fmt.Errorf("error: docker version %.2f.0-ce or higher is required", minimumDockerVersion)
+	}
+
+	// check if docker-compose is installed
+	dockerComposeCMD := exec.Command("docker-compose")
+	if err := dockerComposeCMD.Run(); err != nil {
+		return fmt.Errorf("error: please make sure docker-compose is installed: %s", err.Error())
+	}
+
+	// TODO: check docker-compose version
 
 	return nil
 }
