@@ -14,7 +14,7 @@ func errorExit(err error) {
 	os.Exit(-1)
 }
 
-func retrieveVersionFromString(version []byte) (float64, error) {
+func retrieveVersionFromCMDOutput(version []byte) (float64, error) {
 	fullVersionWithoutQuotes := string(version)
 	fullVersion := strings.Split(fullVersionWithoutQuotes, ".")
 	majorMinorVersionString := fmt.Sprintf("%s.%s", fullVersion[0], fullVersion[1])

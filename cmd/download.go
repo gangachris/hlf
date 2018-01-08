@@ -26,7 +26,7 @@ import (
 	"os/exec"
 
 	"github.com/spf13/cobra"
-	// "github.com/fatih/color"
+	"github.com/fatih/color"
 )
 
 const (
@@ -99,7 +99,7 @@ func dockerInstalled() error {
 		return fmt.Errorf("error checking docker version: %s", err.Error())
 	}
 
-	dockerVersion, err := retrieveVersionFromString(dockerVersionCmdOutput)
+	dockerVersion, err := retrieveVersionFromCMDOutput(dockerVersionCmdOutput)
 	if err != nil {
 		return fmt.Errorf("error parsing docker version: %s", err.Error())
 	}
@@ -109,12 +109,21 @@ func dockerInstalled() error {
 	}
 
 	// check if docker-compose is installed
-	dockerComposeCMD := exec.Command("docker-compose")
-	if err := dockerComposeCMD.Run(); err != nil {
+	dockerComposeCMDOutput, err  := exec.Command("docker-compose", "version", "--short").Output()
+	if err != nil {
 		return fmt.Errorf("error: please make sure docker-compose is installed: %s", err.Error())
 	}
 
-	// TODO: check docker-compose version
+	// check docker-compose version
+	dockerComposeVersion, err := retrieveVersionFromCMDOutput(dockerComposeCMDOutput)
+	if err != nil {
+		return fmt.Errorf("error parsing docker-compose version: %s", err.Error())
+	}
+
+	color.Green("%.2f", dockerComposeVersion)
+	if dockerComposeVersion < minimumDockerComposeVersion {
+		return fmt.Errorf("error: docker-compose version %.2f or higher is required", minimumDockerComposeVersion)
+	}
 
 	return nil
 }
