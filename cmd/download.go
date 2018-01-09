@@ -26,7 +26,7 @@ import (
 	"os/exec"
 
 	"github.com/spf13/cobra"
-	"github.com/fatih/color"
+	// "github.com/fatih/color"
 )
 
 const (
@@ -104,7 +104,12 @@ func dockerInstalled() error {
 		return fmt.Errorf("error parsing docker version: %s", err.Error())
 	}
 
-	if dockerVersion < minimumDockerVersion {
+	requiredDockerVersion, err := biggerThanMinimumVersion(minimumDockerVersion, dockerVersion)
+	if err != nil {
+		return fmt.Errorf("error checking docker version: %s", err.Error())
+	}
+
+	if !requiredDockerVersion {
 		return fmt.Errorf("error: docker version %.2f.0-ce or higher is required", minimumDockerVersion)
 	}
 
@@ -120,9 +125,13 @@ func dockerInstalled() error {
 		return fmt.Errorf("error parsing docker-compose version: %s", err.Error())
 	}
 
-	color.Green("%.2f", dockerComposeVersion)
-	if dockerComposeVersion < minimumDockerComposeVersion {
-		return fmt.Errorf("error: docker-compose version %.2f or higher is required", minimumDockerComposeVersion)
+	requiredDockerComposeVersion, err := biggerThanMinimumVersion(minimumDockerComposeVersion, dockerComposeVersion)
+	if err != nil {
+		return fmt.Errorf("error checking docker-compose version: %s", err.Error())
+	}
+
+	if !requiredDockerComposeVersion {
+		return fmt.Errorf("error: docker-compose version %.2f.0 or higher is required", minimumDockerComposeVersion)
 	}
 
 	return nil
