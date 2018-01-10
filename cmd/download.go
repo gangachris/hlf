@@ -57,9 +57,16 @@ The following tools are downloaded:
 		// Download Tools
 		fmt.Println("download called")
 
+		// check if docker is installed
 		if err := dockerInstalled(); err != nil {
 			errorExit(err)
 		}
+
+		// get system architecture
+
+		// download correct docker images
+
+		// download cryptoconfig/cryptogen tools
 
 	},
 }
