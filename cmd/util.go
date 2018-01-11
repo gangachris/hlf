@@ -101,14 +101,25 @@ func extractTarGz(gzipStream io.Reader) error {
 
 		switch header.Typeflag {
 		case tar.TypeDir:
-			if err := os.Mkdir(platformsBinariesDir+"/"+header.Name, 0755); err != nil {
+			err := os.Mkdir(platformsBinariesDir+"/"+header.Name, 0755)
+
+			if os.IsExist(err) {
+				return nil
+			}
+
+			if err != nil {
 				return err
 			}
 		case tar.TypeReg:
 			outFile, err := os.Create(platformsBinariesDir + "/" + header.Name)
+			if os.IsExist(err) {
+				return nil
+			}
+
 			if err != nil {
 				return err
 			}
+
 			defer outFile.Close()
 			if _, err := io.Copy(outFile, tarReader); err != nil {
 				return err
@@ -129,7 +140,13 @@ func getPlatformBinariesDir() (string, error) {
 
 	platformBinariesDir := home + "/.hlf-cli"
 
-	if err := os.MkdirAll(platformBinariesDir, 0755); err != nil {
+	err = os.MkdirAll(platformBinariesDir, 0755)
+
+	if os.IsExist(err) {
+		return platformBinariesDir, nil
+	}
+
+	if err != nil {
 		return "", err
 	}
 

@@ -77,7 +77,7 @@ The following tools are downloaded:
 		arch := runtime.GOOS + "-" + runtime.GOARCH
 		platformBinariesURL := fmt.Sprintf("%s/%s-%s/hyperledger-fabric-%s-%s.tar.gz", PlatormBinariesURL, arch, FabricVersion, arch, FabricVersion)
 
-		// download Platform Binaries
+		// // download Platform Binaries
 		if err := downloadPlatformBinaries(platformBinariesURL); err != nil {
 			errorExit(err)
 		}
