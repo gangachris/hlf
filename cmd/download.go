@@ -23,15 +23,26 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"os/exec"
+	"runtime"
 
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	// "github.com/fatih/color"
 )
 
 const (
-	minimumDockerVersion        = 17.03
-	minimumDockerComposeVersion = 1.8
+	// MinimumDockerVersion is the minimum required docker version for hyperledger fabric to work
+	MinimumDockerVersion = 17.03
+
+	// MinimumDockerComposeVersion is the minimum required docker-compose version for hyperledger fabric to work
+	MinimumDockerComposeVersion = 1.8
+
+	// FabricVersion is the current stable version of hyperledger fabric
+	FabricVersion = "1.0.5"
+
+	// PlatormBinariesURL is the root url for the platform binaries
+	PlatormBinariesURL = "https://nexus.hyperledger.org/content/repositories/releases/org/hyperledger/fabric/hyperledger-fabric"
 )
 
 // downloadCmd represents the download command
@@ -63,10 +74,29 @@ The following tools are downloaded:
 		}
 
 		// get system architecture
+		arch := runtime.GOOS + "-" + runtime.GOARCH
+		platformBinariesURL := fmt.Sprintf("%s/%s-%s/hyperledger-fabric-%s-%s.tar.gz", PlatormBinariesURL, arch, FabricVersion, arch, FabricVersion)
+
+		// download Platform Binaries
+		if err := downloadPlatformBinaries(platformBinariesURL); err != nil {
+			errorExit(err)
+		}
+
+		// machineHardwareName, err := getMachineHarwareName()
+		// if err != nil {
+		// 	errorExit(err)
+		// }
+
+		// downloadDockerImages
 
 		// download correct docker images
 
 		// download cryptoconfig/cryptogen tools
+
+		// TODO: Go should be installed. Maybe serve this as a warning
+		// TODO: NodeJS is also a prerequisite, warning maybe
+		// TODO: Leave a message that windows is not currently supoorted, but we should try and install windows-build-tools
+		// according to the docs
 
 	},
 }
@@ -111,17 +141,17 @@ func dockerInstalled() error {
 		return fmt.Errorf("error parsing docker version: %s", err.Error())
 	}
 
-	requiredDockerVersion, err := biggerThanMinimumVersion(minimumDockerVersion, dockerVersion)
+	requiredDockerVersion, err := biggerThanMinimumVersion(MinimumDockerVersion, dockerVersion)
 	if err != nil {
 		return fmt.Errorf("error checking docker version: %s", err.Error())
 	}
 
 	if !requiredDockerVersion {
-		return fmt.Errorf("error: docker version %.2f.0-ce or higher is required", minimumDockerVersion)
+		return fmt.Errorf("error: docker version %.2f.0-ce or higher is required", MinimumDockerVersion)
 	}
 
 	// check if docker-compose is installed
-	dockerComposeCMDOutput, err  := exec.Command("docker-compose", "version", "--short").Output()
+	dockerComposeCMDOutput, err := exec.Command("docker-compose", "version", "--short").Output()
 	if err != nil {
 		return fmt.Errorf("error: please make sure docker-compose is installed: %s", err.Error())
 	}
@@ -132,14 +162,25 @@ func dockerInstalled() error {
 		return fmt.Errorf("error parsing docker-compose version: %s", err.Error())
 	}
 
-	requiredDockerComposeVersion, err := biggerThanMinimumVersion(minimumDockerComposeVersion, dockerComposeVersion)
+	requiredDockerComposeVersion, err := biggerThanMinimumVersion(MinimumDockerComposeVersion, dockerComposeVersion)
 	if err != nil {
 		return fmt.Errorf("error checking docker-compose version: %s", err.Error())
 	}
 
 	if !requiredDockerComposeVersion {
-		return fmt.Errorf("error: docker-compose version %.2f.0 or higher is required", minimumDockerComposeVersion)
+		return fmt.Errorf("error: docker-compose version %.2f.0 or higher is required", MinimumDockerComposeVersion)
 	}
 
 	return nil
+}
+
+func downloadPlatformBinaries(platormBinariesURL string) error {
+	color.Blue("Downloading platform binaries...")
+	res, err := http.Get(platormBinariesURL)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	return extractTarGz(res.Body)
 }
