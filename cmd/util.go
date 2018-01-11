@@ -71,7 +71,8 @@ func getMachineHarwareName() (string, error) {
 		return "", nil
 	}
 
-	return string(out), nil
+	trimmed := strings.Trim(string(out), "\n")
+	return trimmed, nil
 }
 
 // tip: https://gist.github.com/indraniel/1a91458984179ab4cf80#gistcomment-2122149

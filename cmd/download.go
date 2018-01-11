@@ -21,11 +21,11 @@
 package cmd
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"net/http"
 	"os/exec"
-	"runtime"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -74,20 +74,25 @@ The following tools are downloaded:
 		}
 
 		// get system architecture
-		arch := runtime.GOOS + "-" + runtime.GOARCH
-		platformBinariesURL := fmt.Sprintf("%s/%s-%s/hyperledger-fabric-%s-%s.tar.gz", PlatormBinariesURL, arch, FabricVersion, arch, FabricVersion)
+		// arch := runtime.GOOS + "-" + runtime.GOARCH
+		// platformBinariesURL := fmt.Sprintf("%s/%s-%s/hyperledger-fabric-%s-%s.tar.gz", PlatormBinariesURL, arch, FabricVersion, arch, FabricVersion)
 
-		// // download Platform Binaries
-		if err := downloadPlatformBinaries(platformBinariesURL); err != nil {
-			errorExit(err)
-		}
-
-		// machineHardwareName, err := getMachineHarwareName()
-		// if err != nil {
+		// // // download Platform Binaries
+		// if err := downloadPlatformBinaries(platformBinariesURL); err != nil {
 		// 	errorExit(err)
 		// }
 
+		machineHardwareName, err := getMachineHarwareName()
+		if err != nil {
+			errorExit(err)
+		}
+
+		dockerTag := machineHardwareName + "-" + FabricVersion
+
 		// downloadDockerImages
+		if err := downloadDockerImages(dockerTag); err != nil {
+			errorExit(err)
+		}
 
 		// download correct docker images
 
@@ -183,4 +188,41 @@ func downloadPlatformBinaries(platormBinariesURL string) error {
 	defer res.Body.Close()
 
 	return extractTarGz(res.Body)
+}
+
+func downloadDockerImages(dockerTag string) error {
+	fabricDockerImages := []string{"peer", "orderer", "couchdb", "ccenv", "javaenv", "kafka", "zookeeper", "tools", "ca"}
+
+	for _, image := range fabricDockerImages {
+		imageString := fmt.Sprintf("hyperledger/fabric-%s:%s", image, dockerTag)
+		if err := pullDockerImage(imageString); err != nil {
+			return err
+		}
+	}
+
+	color.Green("Docker images downloaded successfully")
+	return nil
+}
+
+func pullDockerImage(image string) error {
+	fmt.Println()
+	color.Green("Downloading " + image)
+	cmd := exec.Command("docker", "pull", image)
+	stdout, err := cmd.StdoutPipe()
+
+	if err != nil {
+		return err
+	}
+
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+
+	in := bufio.NewScanner(stdout)
+
+	for in.Scan() {
+		fmt.Println(in.Text())
+	}
+
+	return in.Err()
 }
