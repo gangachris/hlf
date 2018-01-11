@@ -43,6 +43,9 @@ const (
 
 	// PlatormBinariesURL is the root url for the platform binaries
 	PlatormBinariesURL = "https://nexus.hyperledger.org/content/repositories/releases/org/hyperledger/fabric/hyperledger-fabric"
+
+	// HYPERLEDGER string used for docker hub when pulling images
+	HYPERLEDGER = "hyperledger"
 )
 
 // downloadCmd represents the download command
@@ -194,8 +197,13 @@ func downloadDockerImages(dockerTag string) error {
 	fabricDockerImages := []string{"peer", "orderer", "couchdb", "ccenv", "javaenv", "kafka", "zookeeper", "tools", "ca"}
 
 	for _, image := range fabricDockerImages {
-		imageString := fmt.Sprintf("hyperledger/fabric-%s:%s", image, dockerTag)
+		imageString := fmt.Sprintf("%s/fabric-%s:%s", HYPERLEDGER, image, dockerTag)
 		if err := pullDockerImage(imageString); err != nil {
+			return err
+		}
+
+		image := fmt.Sprintf("%s/fabric-%s", HYPERLEDGER, image)
+		if err := tagDockerImage(imageString, image); err != nil {
 			return err
 		}
 	}
@@ -225,4 +233,13 @@ func pullDockerImage(image string) error {
 	}
 
 	return in.Err()
+}
+
+func tagDockerImage(imageString, image string) error {
+	tagCmd, err := exec.Command("docker", "tag", imageString, image).Output()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
