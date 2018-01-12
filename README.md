@@ -1,6 +1,6 @@
 # hlf-cli
 
-Nothing much. CLI is still in early stages, building as I figure stuff out.
+Nothing much for now. CLI is still in early stages, building as I figure stuff out.
 
 ## Current Working
 
@@ -9,3 +9,4 @@ This downloads all the prerequisites required to run a hyperledger fabric instan
 ```
 go run main.go download
 ```
+
