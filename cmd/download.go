@@ -21,6 +21,7 @@
 package cmd
 
 import (
+	"runtime"
 	"bufio"
 	"errors"
 	"fmt"
@@ -77,13 +78,14 @@ The following tools are downloaded:
 		}
 
 		// get system architecture
-		// arch := runtime.GOOS + "-" + runtime.GOARCH
-		// platformBinariesURL := fmt.Sprintf("%s/%s-%s/hyperledger-fabric-%s-%s.tar.gz", PlatormBinariesURL, arch, FabricVersion, arch, FabricVersion)
+		arch := runtime.GOOS + "-" + runtime.GOARCH
+		platformBinariesURL := fmt.Sprintf("%s/%s-%s/hyperledger-fabric-%s-%s.tar.gz", PlatormBinariesURL, arch, FabricVersion, arch, FabricVersion)
 
-		// // // download Platform Binaries
-		// if err := downloadPlatformBinaries(platformBinariesURL); err != nil {
-		// 	errorExit(err)
-		// }
+		// download Platform Binaries
+		// TODO: ganga maybe add to path???
+		if err := downloadPlatformBinaries(platformBinariesURL); err != nil {
+			errorExit(err)
+		}
 
 		machineHardwareName, err := getMachineHarwareName()
 		if err != nil {
@@ -96,10 +98,6 @@ The following tools are downloaded:
 		if err := downloadDockerImages(dockerTag); err != nil {
 			errorExit(err)
 		}
-
-		// download correct docker images
-
-		// download cryptoconfig/cryptogen tools
 
 		// TODO: Go should be installed. Maybe serve this as a warning
 		// TODO: NodeJS is also a prerequisite, warning maybe
@@ -236,7 +234,7 @@ func pullDockerImage(image string) error {
 }
 
 func tagDockerImage(imageString, image string) error {
-	tagCmd, err := exec.Command("docker", "tag", imageString, image).Output()
+	_, err := exec.Command("docker", "tag", imageString, image).Output()
 	if err != nil {
 		return err
 	}
