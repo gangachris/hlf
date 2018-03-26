@@ -1,4 +1,4 @@
-# hlf-cli
+# hlf-cli [![Go Report Card](https://goreportcard.com/badge/github.com/gangachris/hlf-cli)](https://goreportcard.com/report/github.com/gangachris/hlf-cli)
 
 Nothing much for now. CLI is still in early stages, building as I figure stuff out.
 
@@ -9,4 +9,3 @@ This downloads all the prerequisites required to run a hyperledger fabric instan
 ```
 go run main.go download
 ```
-
