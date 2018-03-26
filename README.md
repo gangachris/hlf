@@ -1,4 +1,4 @@
-# hlf-cli [![Go Report Card](https://goreportcard.com/badge/github.com/gangachris/hlf-cli)](https://goreportcard.com/report/github.com/gangachris/hlf-cli)
+# hlf-cli [![Go Report Card](https://goreportcard.com/badge/github.com/gangachris/hlf-cli)](https://goreportcard.com/report/github.com/gangachris/hlf-cli)  [![Build Status](https://travis-ci.org/gangachris/hlf-cli.svg?branch=master)](https://travis-ci.org/gangachris/hlf-cli)
 
 Nothing much for now. CLI is still in early stages, building as I figure stuff out.
 
