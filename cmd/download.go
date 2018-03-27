@@ -21,7 +21,6 @@
 package cmd
 
 import (
-	"runtime"
 	"bufio"
 	"errors"
 	"fmt"
@@ -42,8 +41,8 @@ const (
 	// FabricVersion is the current stable version of hyperledger fabric
 	FabricVersion = "1.0.5"
 
-	// PlatormBinariesURL is the root url for the platform binaries
-	PlatormBinariesURL = "https://nexus.hyperledger.org/content/repositories/releases/org/hyperledger/fabric/hyperledger-fabric"
+	// PlatformBinariesURL is the root url for the platform binaries
+	PlatformBinariesURL = "https://nexus.hyperledger.org/content/repositories/releases/org/hyperledger/fabric/hyperledger-fabric"
 
 	// HYPERLEDGER string used for docker hub when pulling images
 	HYPERLEDGER = "hyperledger"
@@ -73,31 +72,31 @@ The following tools are downloaded:
 		fmt.Println("download called")
 
 		// check if docker is installed
-		if err := dockerInstalled(); err != nil {
-			errorExit(err)
-		}
+		// if err := dockerInstalled(); err != nil {
+		// 	errorExit(err)
+		// }
 
-		// get system architecture
-		arch := runtime.GOOS + "-" + runtime.GOARCH
-		platformBinariesURL := fmt.Sprintf("%s/%s-%s/hyperledger-fabric-%s-%s.tar.gz", PlatormBinariesURL, arch, FabricVersion, arch, FabricVersion)
+		// // get system architecture
+		// arch := runtime.GOOS + "-" + runtime.GOARCH
+		// platformBinariesURL := fmt.Sprintf("%s/%s-%s/hyperledger-fabric-%s-%s.tar.gz", PlatormBinariesURL, arch, FabricVersion, arch, FabricVersion)
 
-		// download Platform Binaries
-		// TODO: ganga maybe add to path???
-		if err := downloadPlatformBinaries(platformBinariesURL); err != nil {
-			errorExit(err)
-		}
+		// // download Platform Binaries
+		// // TODO: ganga maybe add to path???
+		// if err := downloadPlatformBinaries(platformBinariesURL); err != nil {
+		// 	errorExit(err)
+		// }
 
-		machineHardwareName, err := getMachineHarwareName()
-		if err != nil {
-			errorExit(err)
-		}
+		// machineHardwareName, err := getMachineHarwareName()
+		// if err != nil {
+		// 	errorExit(err)
+		// }
 
-		dockerTag := machineHardwareName + "-" + FabricVersion
+		// dockerTag := machineHardwareName + "-" + FabricVersion
 
-		// downloadDockerImages
-		if err := downloadDockerImages(dockerTag); err != nil {
-			errorExit(err)
-		}
+		// // downloadDockerImages
+		// if err := downloadDockerImages(dockerTag); err != nil {
+		// 	errorExit(err)
+		// }
 
 		// TODO: Go should be installed. Maybe serve this as a warning
 		// TODO: NodeJS is also a prerequisite, warning maybe
@@ -180,9 +179,9 @@ func dockerInstalled() error {
 	return nil
 }
 
-func downloadPlatformBinaries(platormBinariesURL string) error {
+func downloadPlatformBinaries(platformBinariesURL string) error {
 	color.Blue("Downloading platform binaries...")
-	res, err := http.Get(platormBinariesURL)
+	res, err := http.Get(platformBinariesURL)
 	if err != nil {
 		return err
 	}
