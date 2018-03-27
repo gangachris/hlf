@@ -41,8 +41,8 @@ const (
 	// FabricVersion is the current stable version of hyperledger fabric
 	FabricVersion = "1.0.5"
 
-	// PlatormBinariesURL is the root url for the platform binaries
-	PlatormBinariesURL = "https://nexus.hyperledger.org/content/repositories/releases/org/hyperledger/fabric/hyperledger-fabric"
+	// PlatformBinariesURL is the root url for the platform binaries
+	PlatformBinariesURL = "https://nexus.hyperledger.org/content/repositories/releases/org/hyperledger/fabric/hyperledger-fabric"
 
 	// HYPERLEDGER string used for docker hub when pulling images
 	HYPERLEDGER = "hyperledger"
@@ -71,9 +71,6 @@ The following tools are downloaded:
 		// Download Tools
 		fmt.Println("download called")
 
-		if err := listContainers(); err != nil {
-			fmt.Println(err)
-		}
 		// check if docker is installed
 		// if err := dockerInstalled(); err != nil {
 		// 	errorExit(err)
@@ -182,9 +179,9 @@ func dockerInstalled() error {
 	return nil
 }
 
-func downloadPlatformBinaries(platormBinariesURL string) error {
+func downloadPlatformBinaries(platformBinariesURL string) error {
 	color.Blue("Downloading platform binaries...")
-	res, err := http.Get(platormBinariesURL)
+	res, err := http.Get(platformBinariesURL)
 	if err != nil {
 		return err
 	}
