@@ -21,7 +21,6 @@
 package cmd
 
 import (
-	"runtime"
 	"bufio"
 	"errors"
 	"fmt"
@@ -72,32 +71,35 @@ The following tools are downloaded:
 		// Download Tools
 		fmt.Println("download called")
 
+		if err := listContainers(); err != nil {
+			fmt.Println(err)
+		}
 		// check if docker is installed
-		if err := dockerInstalled(); err != nil {
-			errorExit(err)
-		}
+		// if err := dockerInstalled(); err != nil {
+		// 	errorExit(err)
+		// }
 
-		// get system architecture
-		arch := runtime.GOOS + "-" + runtime.GOARCH
-		platformBinariesURL := fmt.Sprintf("%s/%s-%s/hyperledger-fabric-%s-%s.tar.gz", PlatormBinariesURL, arch, FabricVersion, arch, FabricVersion)
+		// // get system architecture
+		// arch := runtime.GOOS + "-" + runtime.GOARCH
+		// platformBinariesURL := fmt.Sprintf("%s/%s-%s/hyperledger-fabric-%s-%s.tar.gz", PlatormBinariesURL, arch, FabricVersion, arch, FabricVersion)
 
-		// download Platform Binaries
-		// TODO: ganga maybe add to path???
-		if err := downloadPlatformBinaries(platformBinariesURL); err != nil {
-			errorExit(err)
-		}
+		// // download Platform Binaries
+		// // TODO: ganga maybe add to path???
+		// if err := downloadPlatformBinaries(platformBinariesURL); err != nil {
+		// 	errorExit(err)
+		// }
 
-		machineHardwareName, err := getMachineHarwareName()
-		if err != nil {
-			errorExit(err)
-		}
+		// machineHardwareName, err := getMachineHarwareName()
+		// if err != nil {
+		// 	errorExit(err)
+		// }
 
-		dockerTag := machineHardwareName + "-" + FabricVersion
+		// dockerTag := machineHardwareName + "-" + FabricVersion
 
-		// downloadDockerImages
-		if err := downloadDockerImages(dockerTag); err != nil {
-			errorExit(err)
-		}
+		// // downloadDockerImages
+		// if err := downloadDockerImages(dockerTag); err != nil {
+		// 	errorExit(err)
+		// }
 
 		// TODO: Go should be installed. Maybe serve this as a warning
 		// TODO: NodeJS is also a prerequisite, warning maybe
