@@ -33,13 +33,13 @@ import (
 
 const (
 	// MinimumDockerVersion is the minimum required docker version for hyperledger fabric to work
-	MinimumDockerVersion = 17.03
+	MinimumDockerVersion = "17.06.2-ce"
 
 	// MinimumDockerComposeVersion is the minimum required docker-compose version for hyperledger fabric to work
-	MinimumDockerComposeVersion = 1.8
+	MinimumDockerComposeVersion = "1.14.0"
 
 	// FabricVersion is the current stable version of hyperledger fabric
-	FabricVersion = "1.0.5"
+	FabricVersion = "1.1.0"
 
 	// PlatformBinariesURL is the root url for the platform binaries
 	PlatformBinariesURL = "https://nexus.hyperledger.org/content/repositories/releases/org/hyperledger/fabric/hyperledger-fabric"
