@@ -1,11 +1,25 @@
-# hlf-cli [![Go Report Card](https://goreportcard.com/badge/github.com/gangachris/hlf-cli)](https://goreportcard.com/report/github.com/gangachris/hlf-cli)  [![Build Status](https://travis-ci.org/gangachris/hlf-cli.svg?branch=master)](https://travis-ci.org/gangachris/hlf-cli)
+# hlf-cli [![Go Report Card](https://goreportcard.com/badge/github.com/gangachris/hlf-cli)](https://goreportcard.com/report/github.com/gangachris/hlf-cli) [![Build Status](https://travis-ci.org/gangachris/hlf-cli.svg?branch=master)](https://travis-ci.org/gangachris/hlf-cli)
 
-Nothing much for now. CLI is still in early stages, building as I figure stuff out.
+An attempt to build a tiny cli to help setting up a hyperledger fabric environment quickly.
 
-## Current Working
+## Progress
+
+[x] Downloading platform binaries
+
+[x] Downloading Docker Images
+
+[] Spinning Up an example network
+
+[] Spinning up a network based on a configs (custom configtx, cryptoconfig)
+
+[] Hyperledger Composer (maybe)
+
+[] Deploy (maybe)
 
 ### Download Prerequisites
+
 This downloads all the prerequisites required to run a hyperledger fabric instance. Includes platform binaries and docker images
+
 ```
-go run main.go download
+go run main.go download -h
 ```
