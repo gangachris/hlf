@@ -108,7 +108,7 @@ func correctSemver(minimum, current string) (bool, error) {
 	return minSemver.patch == currSemver.patch, nil
 }
 
-func getMachineHarwareName() (string, error) {
+func getMachineHardwareName() (string, error) {
 	out, err := exec.Command("uname", "-m").Output()
 	if err != nil {
 		return "", nil
@@ -118,7 +118,7 @@ func getMachineHarwareName() (string, error) {
 	return trimmed, nil
 }
 
-// tip: https://gist.github.com/indraniel/1a91458984179ab4cf80#gistcomment-2122149
+// ref: https://gist.github.com/indraniel/1a91458984179ab4cf80#gistcomment-2122149
 func extractTarGz(gzipStream io.Reader) error {
 	uncompressedStream, err := gzip.NewReader(gzipStream)
 	if err != nil {
@@ -169,7 +169,7 @@ func extractTarGz(gzipStream io.Reader) error {
 				return err
 			}
 		default:
-			return fmt.Errorf("error extracting tar file: unkown type %s in %s", string(header.Typeflag), header.Name)
+			return fmt.Errorf("error extracting tar file: unknown type %s in %s", string(header.Typeflag), header.Name)
 		}
 	}
 
