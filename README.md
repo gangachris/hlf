@@ -18,7 +18,9 @@ An attempt to build a tiny cli to help setting up a hyperledger fabric environme
 
 ### Download Prerequisites
 
-This downloads all the prerequisites required to run a hyperledger fabric instance. Includes platform binaries and docker images
+This downloads all the prerequisites required to run a hyperledger fabric instance. Includes platform binaries and docker images.
+
+Note that the platform binaries are downloaded to `$HOME/.hlf-cli` (TODO: should be configurable)
 
 ```
 go run main.go download -h
