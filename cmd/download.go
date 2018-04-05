@@ -26,7 +26,6 @@ import (
 	"fmt"
 	"net/http"
 	"os/exec"
-	"runtime"
 	"strings"
 
 	"github.com/fatih/color"
@@ -81,25 +80,26 @@ The following tools are downloaded:
 		}
 
 		// get system architecture
-		arch := runtime.GOOS + "-" + runtime.GOARCH
-		platformBinariesURL := fmt.Sprintf("%s/%s-%s/hyperledger-fabric-%s-%s.tar.gz", PlatformBinariesURL, arch, FabricVersion, arch, FabricVersion)
+		// arch := runtime.GOOS + "-" + runtime.GOARCH
+		// platformBinariesURL := fmt.Sprintf("%s/%s-%s/hyperledger-fabric-%s-%s.tar.gz", PlatformBinariesURL, arch, FabricVersion, arch, FabricVersion)
 
 		// download Platform Binaries
 		// TODO: @ganga maybe add to path???
 		// TODO: @ganga maybe show progress with uilive
 		// github.com/gosuri/uilive
-		if err := downloadPlatformBinaries(platformBinariesURL); err != nil {
-			errorExit(err)
-		}
+		// TODO: @ganga a way to check if platform binaries have been downloaded
+		// if err := downloadPlatformBinaries(platformBinariesURL); err != nil {
+		// 	errorExit(err)
+		// }
 
 		machineHardwareName, err := getMachineHardwareName()
 		if err != nil {
 			errorExit(err)
 		}
 
-		// dockerTag := machineHardwareName + "-" + FabricVersion
+		dockerTag := machineHardwareName + "-" + FabricVersion
 
-		// // downloadDockerImages
+		// downloadDockerImages
 		// if err := downloadDockerImages(dockerTag); err != nil {
 		// 	errorExit(err)
 		// }
