@@ -79,48 +79,34 @@ func getSemverFromSlice(semver []string) (semanticVersion, error) {
 	return smv, nil
 }
 
-// func correctSemver(minimum, current string) (bool, error) {
+// correctSemver compares the two semantic versions provided
+// and returns true if current version is greater than the minimum version
+func correctSemver(minimum, current string) (bool, error) {
+	minSemver, err := getSemverFromString(minimum)
+	if err != nil {
+		return false, err
+	}
 
-// 	var min, max semver
+	currSemver, err := getSemverFromString(current)
+	if err != nil {
+		return false, err
+	}
 
-// 	minSplit := strings.Split(minimum, ".")
-// 	major, err := strconv.Atoi(minSplit[0])
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	min.major = major
+	// compare
+	if minSemver.major != currSemver.major {
+		return minSemver.major < currSemver.major, nil
+	}
 
-// 	minor, err := strconv.Atoi(minSplit[1])
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	min.minor = minor
+	if minSemver.minor != currSemver.minor {
+		return minSemver.minor < currSemver.minor, nil
+	}
 
-// 	patch, err := strconv.Atoi(minSplit[2])
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	min.patch = patch
+	if minSemver.patch != currSemver.patch {
+		return minSemver.patch < currSemver.patch, nil
+	}
 
-// 	currSplit := strings.Split(current, ".")
-// 	major, err = strconv.Atoi(currSplit[0])
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	max.major = major
-
-// 	minor, err = strconv.Atoi(currSplit[1])
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	max.minor = minor
-
-// 	patch, err = strconv.Atoi(currSplit[2])
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	max.patch = patch
-// }
+	return minSemver.patch == currSemver.patch, nil
+}
 
 func getMachineHarwareName() (string, error) {
 	out, err := exec.Command("uname", "-m").Output()
