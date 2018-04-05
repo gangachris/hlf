@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"net/http"
 	"os/exec"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -48,33 +49,35 @@ const (
 	HYPERLEDGER = "hyperledger"
 )
 
-// downloadCmd represents the download command
+// downloadCmd will download the platform binaries and the docker images
+// once the download is done, the images are tagged
 var downloadCmd = &cobra.Command{
 	Use:   "download",
-	Short: "Download Hyperledger Fabric Tools (Docker Images, Crypto Tools)",
+	Short: "Download Hyperledger Fabric Tools (Docker Images, Platform Binaries)",
 	Long: `This will download all the required Docker Images to set up a Hyperledger Fabric Environment.
 The following Images are downloaded:
 
-	1. hyperledger/fabric-ca
-	2. hyperledger/fabric-couchdb
-	3. hyperledger/fabric-orderer
-	4. hyperledger/fabric-peer
-	5. hyperledger/fabric-ccenv
-	6. hyperledger/fabric-baseos
+	 1. hyperledger/fabric-ca
+	 2. hyperledger/fabric-couchdb
+	 3. hyperledger/fabric-orderer
+	 4. hyperledger/fabric-peer
+	 5. hyperledger/fabric-ccenv
+	 6. hyperledger/fabric-baseos
+	 7. hyperledger/fabric-javaenv
+	 8. hyperledger/fabric-tools
+	 9. hyperledger/fabric-zookeeper
+	10. hyperledger/fabric-kafka
 
 The following tools are downloaded:
 
 	1. Cryptogen Tools`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Get the current architecture
-		// Check if docker is installed
-		// Download Tools
-		fmt.Println("download called")
+		color.Blue("Downloading Docker images and platform binaries")
 
 		// check if docker is installed
-		// if err := dockerInstalled(); err != nil {
-		// 	errorExit(err)
-		// }
+		if err := dockerInstalled(); err != nil {
+			errorExit(err)
+		}
 
 		// // get system architecture
 		// arch := runtime.GOOS + "-" + runtime.GOARCH
@@ -124,14 +127,14 @@ func dockerInstalled() error {
 	// check if docker is installed
 	dockerCMD := exec.Command("docker")
 	if err := dockerCMD.Run(); err != nil {
-		return fmt.Errorf("Error running docker, please make sure docker is installed: %s", err.Error())
+		return fmt.Errorf("error running docker, please make sure docker is installed: %s", err.Error())
 	}
 
 	// check if docker daemon is running
 	dockerPsCMD := exec.Command("docker", "ps")
 	if err := dockerPsCMD.Run(); err != nil {
 		// Docker error string whenever you run docker ps
-		dockerErrorString := "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?"
+		dockerErrorString := "cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?"
 		return errors.New(dockerErrorString)
 	}
 
@@ -141,40 +144,40 @@ func dockerInstalled() error {
 		return fmt.Errorf("error checking docker version: %s", err.Error())
 	}
 
-	dockerVersion, err := retrieveVersionFromCMDOutput(dockerVersionCmdOutput)
-	if err != nil {
-		return fmt.Errorf("error parsing docker version: %s", err.Error())
-	}
+	dockerSemverCeString := strings.TrimSpace(string(dockerVersionCmdOutput))
+	// get semver // for now we get rid of -ce
+	dockerSemver := dockerSemverCeString[:len(dockerSemverCeString)-3]
+	minimumSemver := MinimumDockerVersion[:len(MinimumDockerVersion)-3]
 
-	requiredDockerVersion, err := biggerThanMinimumVersion(MinimumDockerVersion, dockerVersion)
+	requiredDockerVersion, err := correctSemver(minimumSemver, dockerSemver)
 	if err != nil {
 		return fmt.Errorf("error checking docker version: %s", err.Error())
 	}
 
 	if !requiredDockerVersion {
-		return fmt.Errorf("error: docker version %.2f.0-ce or higher is required", MinimumDockerVersion)
+		return fmt.Errorf("error: docker version %s-ce or higher is required", minimumSemver)
 	}
 
 	// check if docker-compose is installed
-	dockerComposeCMDOutput, err := exec.Command("docker-compose", "version", "--short").Output()
-	if err != nil {
-		return fmt.Errorf("error: please make sure docker-compose is installed: %s", err.Error())
-	}
+	// dockerComposeCMDOutput, err := exec.Command("docker-compose", "version", "--short").Output()
+	// if err != nil {
+	// 	return fmt.Errorf("error: please make sure docker-compose is installed: %s", err.Error())
+	// }
 
 	// check docker-compose version
-	dockerComposeVersion, err := retrieveVersionFromCMDOutput(dockerComposeCMDOutput)
-	if err != nil {
-		return fmt.Errorf("error parsing docker-compose version: %s", err.Error())
-	}
+	// dockerComposeVersion, err := retrieveVersionFromCMDOutput(dockerComposeCMDOutput)
+	// if err != nil {
+	// 	return fmt.Errorf("error parsing docker-compose version: %s", err.Error())
+	// }
 
-	requiredDockerComposeVersion, err := biggerThanMinimumVersion(MinimumDockerComposeVersion, dockerComposeVersion)
-	if err != nil {
-		return fmt.Errorf("error checking docker-compose version: %s", err.Error())
-	}
+	// requiredDockerComposeVersion, err := biggerThanMinimumVersion(MinimumDockerComposeVersion, dockerComposeVersion)
+	// if err != nil {
+	// 	return fmt.Errorf("error checking docker-compose version: %s", err.Error())
+	// }
 
-	if !requiredDockerComposeVersion {
-		return fmt.Errorf("error: docker-compose version %.2f.0 or higher is required", MinimumDockerComposeVersion)
-	}
+	// if !requiredDockerComposeVersion {
+	// 	return fmt.Errorf("error: docker-compose version %.2f.0 or higher is required", MinimumDockerComposeVersion)
+	// }
 
 	return nil
 }
