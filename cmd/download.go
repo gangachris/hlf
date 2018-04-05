@@ -21,13 +21,15 @@
 package cmd
 
 import (
-	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"os/exec"
 	"strings"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -41,6 +43,9 @@ const (
 
 	// FabricVersion is the current stable version of hyperledger fabric
 	FabricVersion = "1.1.0"
+
+	// ThirdPartyVersionTag represents the version of third party images released (couchdb, kafka and zookeeper)
+	ThirdPartyVersionTag = "0.4.6"
 
 	// PlatformBinariesURL is the root url for the platform binaries
 	PlatformBinariesURL = "https://nexus.hyperledger.org/content/repositories/releases/org/hyperledger/fabric/hyperledger-fabric"
@@ -97,12 +102,10 @@ The following tools are downloaded:
 			errorExit(err)
 		}
 
-		dockerTag := machineHardwareName + "-" + FabricVersion
-
 		// downloadDockerImages
-		// if err := downloadDockerImages(dockerTag); err != nil {
-		// 	errorExit(err)
-		// }
+		if err := downloadAndTagDockerImages(machineHardwareName); err != nil {
+			errorExit(err)
+		}
 
 		// TODO: Go should be installed. Maybe serve this as a warning
 		// TODO: NodeJS is also a prerequisite, warning maybe
@@ -193,17 +196,23 @@ func downloadPlatformBinaries(platformBinariesURL string) error {
 	return extractTarGz(res.Body)
 }
 
-func downloadDockerImages(dockerTag string) error {
-	fabricDockerImages := []string{"peer", "orderer", "couchdb", "ccenv", "javaenv", "kafka", "zookeeper", "tools", "ca"}
+func downloadAndTagDockerImages(machineHardwareName string) error {
+	fabricDockerImages := []string{"peer", "orderer", "ccenv", "javaenv", "tools", "ca"}
+	thirdPartyDockerImages := []string{"couchdb", "kafka", "zookeeper"}
+
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		panic(err)
+	}
 
 	for _, image := range fabricDockerImages {
-		imageString := fmt.Sprintf("%s/fabric-%s:%s", HYPERLEDGER, image, dockerTag)
-		if err := pullDockerImage(imageString); err != nil {
+		if err := pullAndTagImage(cli, image, machineHardwareName, FabricVersion); err != nil {
 			return err
 		}
+	}
 
-		image := fmt.Sprintf("%s/fabric-%s", HYPERLEDGER, image)
-		if err := tagDockerImage(imageString, image); err != nil {
+	for _, image := range thirdPartyDockerImages {
+		if err := pullAndTagImage(cli, image, machineHardwareName, ThirdPartyVersionTag); err != nil {
 			return err
 		}
 	}
@@ -212,34 +221,21 @@ func downloadDockerImages(dockerTag string) error {
 	return nil
 }
 
-func pullDockerImage(image string) error {
-	fmt.Println()
-	color.Green("Downloading " + image)
-	cmd := exec.Command("docker", "pull", image)
-	stdout, err := cmd.StdoutPipe()
+func pullAndTagImage(cli *client.Client, imageName, machineHardwareName, tag string) error {
+	color.Blue("Pulling %s", imageName)
+	imageString := fmt.Sprintf("%s/fabric-%s:%s-%s", HYPERLEDGER, imageName, machineHardwareName, tag)
 
+	_, err := cli.ImagePull(context.Background(), imageString, types.ImagePullOptions{})
 	if err != nil {
 		return err
 	}
 
-	if err := cmd.Start(); err != nil {
+	image := fmt.Sprintf("%s/fabric-%s", HYPERLEDGER, imageName)
+
+	if err := cli.ImageTag(context.Background(), imageString, image); err != nil {
 		return err
 	}
-
-	in := bufio.NewScanner(stdout)
-
-	for in.Scan() {
-		fmt.Println(in.Text())
-	}
-
-	return in.Err()
-}
-
-func tagDockerImage(imageString, image string) error {
-	_, err := exec.Command("docker", "tag", imageString, image).Output()
-	if err != nil {
-		return err
-	}
+	color.Blue("successfully tagged %s to %s", imageString, image)
 
 	return nil
 }
