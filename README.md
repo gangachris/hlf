@@ -4,17 +4,17 @@ An attempt to build a tiny cli to help setting up a hyperledger fabric environme
 
 ## Progress
 
-[x] Downloading platform binaries
+- [x] Downloading platform binaries
 
-[x] Downloading Docker Images
+- [x] Downloading Docker Images
 
-[] Spinning Up an example network
+- [ ] Spinning Up an example network
 
-[] Spinning up a network based on a configs (custom configtx, cryptoconfig)
+- [ ] Spinning up a network based on a configs (custom configtx, cryptoconfig)
 
-[] Hyperledger Composer (maybe)
+- [ ] Hyperledger Composer (maybe)
 
-[] Deploy (maybe)
+- [ ] Deploy (maybe)
 
 ### Download Prerequisites
 
