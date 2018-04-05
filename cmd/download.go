@@ -159,25 +159,22 @@ func dockerInstalled() error {
 	}
 
 	// check if docker-compose is installed
-	// dockerComposeCMDOutput, err := exec.Command("docker-compose", "version", "--short").Output()
-	// if err != nil {
-	// 	return fmt.Errorf("error: please make sure docker-compose is installed: %s", err.Error())
-	// }
+	dockerComposeCMDOutput, err := exec.Command("docker-compose", "version", "--short").Output()
+	if err != nil {
+		return fmt.Errorf("error: please make sure docker-compose is installed: %s", err.Error())
+	}
+
+	dockerComposeSemverString := strings.TrimSpace(string(dockerComposeCMDOutput))
 
 	// check docker-compose version
-	// dockerComposeVersion, err := retrieveVersionFromCMDOutput(dockerComposeCMDOutput)
-	// if err != nil {
-	// 	return fmt.Errorf("error parsing docker-compose version: %s", err.Error())
-	// }
+	requiredDockerComposeVersion, err := correctSemver(MinimumDockerComposeVersion, dockerComposeSemverString)
+	if err != nil {
+		return fmt.Errorf("error checking docker-compose version: %s", err.Error())
+	}
 
-	// requiredDockerComposeVersion, err := biggerThanMinimumVersion(MinimumDockerComposeVersion, dockerComposeVersion)
-	// if err != nil {
-	// 	return fmt.Errorf("error checking docker-compose version: %s", err.Error())
-	// }
-
-	// if !requiredDockerComposeVersion {
-	// 	return fmt.Errorf("error: docker-compose version %.2f.0 or higher is required", MinimumDockerComposeVersion)
-	// }
+	if !requiredDockerComposeVersion {
+		return fmt.Errorf("error: docker-compose version %s or higher is required", MinimumDockerComposeVersion)
+	}
 
 	return nil
 }
