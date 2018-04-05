@@ -73,9 +73,13 @@ The following Images are downloaded:
 	 9. hyperledger/fabric-zookeeper
 	10. hyperledger/fabric-kafka
 
-The following tools are downloaded:
+The following binaries tools are also downloaded:
 
-	1. Cryptogen Tools`,
+	1. configtxgen
+	2. configtxlator
+	3. cryptogen
+	4. peer
+	5. orderer`,
 	Run: func(cmd *cobra.Command, args []string) {
 		color.Blue("Downloading Docker images and platform binaries")
 
