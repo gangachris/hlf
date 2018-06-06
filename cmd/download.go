@@ -21,10 +21,10 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"runtime"
-	"strconv"
 
 	"github.com/fatih/color"
 	"github.com/gangachris/hlf-cli/docker"
@@ -45,10 +45,13 @@ const (
 	HYPERLEDGER = "hyperledger"
 )
 
+var platformBinariesURL string
+
+// TODO: @ganga we should be able to download samples too i.e hlf download samples (fabric-samples)
 // downloadCmd will download the platform binaries and the docker images
 // once the download is done, the images are tagged
 var downloadCmd = &cobra.Command{
-	Use:   "download",
+	Use:   "download [images,binaries,samples]",
 	Short: "Download Hyperledger Fabric Tools (Docker Images, Platform Binaries)",
 	Long: `This will download all the required Docker Images to set up a Hyperledger Fabric Environment.
 The following Images are downloaded:
@@ -72,45 +75,20 @@ The following binaries tools are also downloaded:
 	4. peer
 	5. orderer`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// download setup and getting system architecture and machine hardware.
-		arch := runtime.GOOS + "-" + runtime.GOARCH
-		platformBinariesURL := fmt.Sprintf("%s/%s-%s/hyperledger-fabric-%s-%s.tar.gz", PlatformBinariesURL, arch, FabricVersion, arch, FabricVersion)
-
-		// check flags
-		binaries := cmd.Flag("binaries").Value.String()
-		binariesOnly, err := strconv.ParseBool(binaries)
-		if err != nil {
-			errorExit(err)
+		// We need to check the arguments whether there's images, binaries, or samples (instead of flags)
+		if len(args) > 4 {
+			errorExit(errors.New("too many arguments passed")) // TODO: @ganga global error
 		}
 
-		images := cmd.Flag("images").Value.String()
-		imagesOnly, err := strconv.ParseBool(images)
-		if err != nil {
-			errorExit(err)
-		}
-
-		if !binariesOnly && !imagesOnly {
-			color.Blue("Downloading Platform Binaries and Docker Images")
-			if err := downloadPlatformBinaries(platformBinariesURL); err != nil {
+		if len(args) == 0 {
+			if err := download("all"); err != nil {
 				errorExit(err)
 			}
-
-			if err := downloadDockerImages(); err != nil {
-				errorExit(err)
-			}
-
 			return
 		}
 
-		// both may be true so no return
-		if binariesOnly {
-			if err := downloadPlatformBinaries(platformBinariesURL); err != nil {
-				errorExit(err)
-			}
-		}
-
-		if imagesOnly {
-			if err := downloadDockerImages(); err != nil {
+		for _, arg := range args {
+			if err := download(arg); err != nil {
 				errorExit(err)
 			}
 		}
@@ -118,6 +96,10 @@ The following binaries tools are also downloaded:
 }
 
 func init() {
+	// download setup and getting system architecture and machine hardware.
+	arch := runtime.GOOS + "-" + runtime.GOARCH
+	platformBinariesURL = fmt.Sprintf("%s/%s-%s/hyperledger-fabric-%s-%s.tar.gz", PlatformBinariesURL, arch, FabricVersion, arch, FabricVersion)
+
 	rootCmd.AddCommand(downloadCmd)
 
 	// Here you will define your flags and configuration settings.
@@ -128,8 +110,41 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	downloadCmd.Flags().BoolP("binaries", "b", false, "Specifies whether to download platform binaries only")
-	downloadCmd.Flags().BoolP("images", "i", false, "Specifies whether to download docker images only")
+	// downloadCmd.Flags().BoolP("binaries", "b", false, "Specifies whether to download platform binaries only")
+	// downloadCmd.Flags().BoolP("images", "i", false, "Specifies whether to download docker images only")
+}
+
+func download(arg string) error {
+	// ahm, seems like there should be a fallthrough somewhere
+	switch arg {
+	case "all":
+		if err := downloadDockerImages(); err != nil {
+			return err
+		}
+
+		if err := downloadPlatformBinaries(); err != nil {
+			return err
+		}
+
+		if err := downloadSamples(); err != nil {
+			return err
+		}
+	case "images":
+		if err := downloadDockerImages(); err != nil {
+			return err
+		}
+	case "binaries":
+		if err := downloadPlatformBinaries(); err != nil {
+			return err
+		}
+	case "samples":
+		if err := downloadSamples(); err != nil {
+			return err
+		}
+	default:
+		return errors.New(arg + " is not a valid argument")
+	}
+	return nil
 }
 
 func downloadDockerImages() error {
@@ -157,7 +172,7 @@ func downloadDockerImages() error {
 		return err
 	}
 
-	thirdPartyDockerImages := []string{"couchdb", "zookeeper", "kafka"}
+	thirdPartyDockerImages := []string{"couchdb", "kafka", "zookeeper"}
 	thirdPartyTag := machineHardwareName + "-" + ThirdPartyVersionTag
 	if err := dockerClient.DownloadDockerImages(thirdPartyDockerImages, thirdPartyTag); err != nil {
 		return err
@@ -173,7 +188,7 @@ func downloadDockerImages() error {
 	return nil
 }
 
-func downloadPlatformBinaries(platformBinariesURL string) error {
+func downloadPlatformBinaries() error {
 	// download Platform Binaries
 	// TODO: @ganga maybe add to path???
 	// TODO: @ganga maybe show progress with uilive
@@ -188,4 +203,9 @@ func downloadPlatformBinaries(platformBinariesURL string) error {
 	defer res.Body.Close()
 
 	return extractTarGz(res.Body)
+}
+
+func downloadSamples() error {
+	color.Green("Downloading binaries")
+	return nil
 }

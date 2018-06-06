@@ -156,7 +156,7 @@ func TestCorrectSemver(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := CorrectSemver(tt.args.minimum, tt.args.current)
+			got, err := CorrectVersion(tt.args.minimum, tt.args.current)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CorrectSemver() error = %v, wantErr %v", err, tt.wantErr)
 				return
