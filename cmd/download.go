@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
+	"strconv"
 
 	"github.com/fatih/color"
 	"github.com/gangachris/hlf-cli/docker"
@@ -71,56 +72,48 @@ The following binaries tools are also downloaded:
 	4. peer
 	5. orderer`,
 	Run: func(cmd *cobra.Command, args []string) {
-		color.Blue("Downloading Platform Binaries and Docker Images")
-
-		// check if docker is installed
-		if err := docker.Installed(); err != nil {
-			errorExit(err)
-		}
-
-		// get system architecture
+		// download setup and getting system architecture and machine hardware.
 		arch := runtime.GOOS + "-" + runtime.GOARCH
 		platformBinariesURL := fmt.Sprintf("%s/%s-%s/hyperledger-fabric-%s-%s.tar.gz", PlatformBinariesURL, arch, FabricVersion, arch, FabricVersion)
 
-		// download Platform Binaries
-		// TODO: @ganga maybe add to path???
-		// TODO: @ganga maybe show progress with uilive
-		// github.com/gosuri/uilive
-		// TODO: @ganga a way to check if platform binaries have been downloaded
-		if err := downloadPlatformBinaries(platformBinariesURL); err != nil {
-			errorExit(err)
-		}
-
-		machineHardwareName, err := getMachineHardwareName()
+		// check flags
+		binaries := cmd.Flag("binaries").Value.String()
+		binariesOnly, err := strconv.ParseBool(binaries)
 		if err != nil {
 			errorExit(err)
 		}
 
-		dockerClient, err := docker.New()
+		images := cmd.Flag("images").Value.String()
+		imagesOnly, err := strconv.ParseBool(images)
 		if err != nil {
 			errorExit(err)
 		}
 
-		fabricDockerImages := []string{"peer", "orderer", "ccenv", "javaenv", "tools", "ca"}
-		fabricTag := machineHardwareName + "-" + FabricVersion
+		if !binariesOnly && !imagesOnly {
+			color.Blue("Downloading Platform Binaries and Docker Images")
+			if err := downloadPlatformBinaries(platformBinariesURL); err != nil {
+				errorExit(err)
+			}
 
-		if err := dockerClient.DownloadDockerImages(fabricDockerImages, fabricTag); err != nil {
-			errorExit(err)
+			if err := downloadDockerImages(); err != nil {
+				errorExit(err)
+			}
+
+			return
 		}
 
-		thirdPartyDockerImages := []string{"couchdb", "zookeeper", "kafka"}
-		thirdPartyTag := machineHardwareName + "-" + ThirdPartyVersionTag
-		if err := dockerClient.DownloadDockerImages(thirdPartyDockerImages, thirdPartyTag); err != nil {
-			errorExit(err)
+		// both may be true so no return
+		if binariesOnly {
+			if err := downloadPlatformBinaries(platformBinariesURL); err != nil {
+				errorExit(err)
+			}
 		}
 
-		color.Green("Successfully downloaded docker images")
-
-		// TODO: Go should be installed. Maybe serve this as a warning
-		// TODO: NodeJS is also a prerequisite, warning maybe
-		// TODO: Leave a message that windows is not currently supoorted, but we should try and install windows-build-tools
-		// according to the docs
-
+		if imagesOnly {
+			if err := downloadDockerImages(); err != nil {
+				errorExit(err)
+			}
+		}
 	},
 }
 
@@ -135,10 +128,58 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// downloadCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	downloadCmd.Flags().BoolP("binaries", "b", false, "Specifies whether to download platform binaries only")
+	downloadCmd.Flags().BoolP("images", "i", false, "Specifies whether to download docker images only")
+}
+
+func downloadDockerImages() error {
+	// wrapper function for all docker related actions
+	color.Blue("Downloading docker images")
+	machineHardwareName, err := getMachineHardwareName()
+	if err != nil {
+		errorExit(err)
+	}
+
+	// check if docker is installed
+	if err := docker.Installed(); err != nil {
+		return err
+	}
+
+	dockerClient, err := docker.New()
+	if err != nil {
+		return err
+	}
+
+	fabricDockerImages := []string{"peer", "orderer", "ccenv", "javaenv", "tools", "ca"}
+	fabricTag := machineHardwareName + "-" + FabricVersion
+
+	if err := dockerClient.DownloadDockerImages(fabricDockerImages, fabricTag); err != nil {
+		return err
+	}
+
+	thirdPartyDockerImages := []string{"couchdb", "zookeeper", "kafka"}
+	thirdPartyTag := machineHardwareName + "-" + ThirdPartyVersionTag
+	if err := dockerClient.DownloadDockerImages(thirdPartyDockerImages, thirdPartyTag); err != nil {
+		return err
+	}
+
+	color.Green("Successfully downloaded docker images")
+
+	// TODO: Go should be installed. Maybe serve this as a warning
+	// TODO: NodeJS is also a prerequisite, warning maybe
+	// TODO: Leave a message that windows is not currently supoorted, but we should try and install windows-build-tools
+	// according to the docs
+
+	return nil
 }
 
 func downloadPlatformBinaries(platformBinariesURL string) error {
+	// download Platform Binaries
+	// TODO: @ganga maybe add to path???
+	// TODO: @ganga maybe show progress with uilive
+	// github.com/gosuri/uilive
+	// TODO: @ganga a way to check if platform binaries have been downloaded
+
 	color.Blue("Downloading platform binaries...")
 	res, err := http.Get(platformBinariesURL)
 	if err != nil {
