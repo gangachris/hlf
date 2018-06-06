@@ -1,67 +1,9 @@
-package cmd
+package semver
 
 import (
 	"reflect"
 	"testing"
 )
-
-func Test_correctSemver(t *testing.T) {
-	type args struct {
-		minimum string
-		current string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    bool
-		wantErr bool
-	}{
-		{
-			name: "correct minimum version",
-			args: args{
-				minimum: "17.03.0",
-				current: "18.03.0",
-			},
-			want: true,
-		},
-		{
-			name: "correct minimum version",
-			args: args{
-				minimum: "18.3.0",
-				current: "18.13.0",
-			},
-			want: true,
-		},
-		{
-			name: "correct minimum version",
-			args: args{
-				minimum: "18.03.0",
-				current: "18.03.10",
-			},
-			want: true,
-		},
-		{
-			name: "correct minimum version",
-			args: args{
-				minimum: "19.03.0",
-				current: "18.03.10",
-			},
-			want: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := correctSemver(tt.args.minimum, tt.args.current)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("correctSemver() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("correctSemver() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
 
 func Test_getSemverFromString(t *testing.T) {
 	type args struct {
@@ -121,7 +63,7 @@ func Test_getSemverFromString(t *testing.T) {
 	}
 }
 
-func Test_getSemverFromSlice(t *testing.T) {
+func Test_setSemverFromSlice(t *testing.T) {
 	type args struct {
 		semver []string
 	}
@@ -154,16 +96,73 @@ func Test_getSemverFromSlice(t *testing.T) {
 			},
 		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := getSemverFromSlice(tt.args.semver)
+			got, err := setSemverFromSlice(tt.args.semver)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("getSemverFromSlice() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("setSemverFromSlice() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("getSemverFromSlice() = %v, want %v", got, tt.want)
+				t.Errorf("setSemverFromSlice() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCorrectSemver(t *testing.T) {
+	type args struct {
+		minimum string
+		current string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    bool
+		wantErr bool
+	}{
+		{
+			name: "correct minimum version",
+			args: args{
+				minimum: "17.03.0",
+				current: "18.03.0",
+			},
+			want: true,
+		},
+		{
+			name: "correct minimum version",
+			args: args{
+				minimum: "18.3.0",
+				current: "18.13.0",
+			},
+			want: true,
+		},
+		{
+			name: "correct minimum version",
+			args: args{
+				minimum: "18.03.0",
+				current: "18.03.10",
+			},
+			want: true,
+		},
+		{
+			name: "correct minimum version",
+			args: args{
+				minimum: "19.03.0",
+				current: "18.03.10",
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := CorrectVersion(tt.args.minimum, tt.args.current)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("CorrectSemver() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("CorrectSemver() = %v, want %v", got, tt.want)
 			}
 		})
 	}

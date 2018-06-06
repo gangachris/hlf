@@ -29,9 +29,9 @@ import (
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Shows the currently installed version of hlc-cli",
+	Short: "Shows the currently installed version of hlf-cli",
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: ganga, should change dynaimcally
+		// TODO: ganga, should change dynamically on build
 		version := "0.0.1"
 		fmt.Println(version)
 	},

@@ -21,26 +21,17 @@
 package cmd
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
-	"os/exec"
-	"strings"
+	"runtime"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 	"github.com/fatih/color"
+	"github.com/gangachris/hlf-cli/docker"
 	"github.com/spf13/cobra"
 )
 
 const (
-	// MinimumDockerVersion is the minimum required docker version for hyperledger fabric to work
-	MinimumDockerVersion = "17.06.2-ce"
-
-	// MinimumDockerComposeVersion is the minimum required docker-compose version for hyperledger fabric to work
-	MinimumDockerComposeVersion = "1.14.0"
-
 	// FabricVersion is the current stable version of hyperledger fabric
 	FabricVersion = "1.1.0"
 
@@ -54,10 +45,13 @@ const (
 	HYPERLEDGER = "hyperledger"
 )
 
+var platformBinariesURL string
+
+// TODO: @ganga we should be able to download samples too i.e hlf download samples (fabric-samples)
 // downloadCmd will download the platform binaries and the docker images
 // once the download is done, the images are tagged
 var downloadCmd = &cobra.Command{
-	Use:   "download",
+	Use:   "download [images,binaries,samples]",
 	Short: "Download Hyperledger Fabric Tools (Docker Images, Platform Binaries)",
 	Long: `This will download all the required Docker Images to set up a Hyperledger Fabric Environment.
 The following Images are downloaded:
@@ -81,45 +75,31 @@ The following binaries tools are also downloaded:
 	4. peer
 	5. orderer`,
 	Run: func(cmd *cobra.Command, args []string) {
-		color.Blue("Downloading Docker images and platform binaries")
-
-		// check if docker is installed
-		if err := dockerInstalled(); err != nil {
-			errorExit(err)
+		// We need to check the arguments whether there's images, binaries, or samples (instead of flags)
+		if len(args) > 4 {
+			errorExit(errors.New("too many arguments passed")) // TODO: @ganga global error
 		}
 
-		// get system architecture
-		// arch := runtime.GOOS + "-" + runtime.GOARCH
-		// platformBinariesURL := fmt.Sprintf("%s/%s-%s/hyperledger-fabric-%s-%s.tar.gz", PlatformBinariesURL, arch, FabricVersion, arch, FabricVersion)
-
-		// download Platform Binaries
-		// TODO: @ganga maybe add to path???
-		// TODO: @ganga maybe show progress with uilive
-		// github.com/gosuri/uilive
-		// TODO: @ganga a way to check if platform binaries have been downloaded
-		// if err := downloadPlatformBinaries(platformBinariesURL); err != nil {
-		// 	errorExit(err)
-		// }
-
-		machineHardwareName, err := getMachineHardwareName()
-		if err != nil {
-			errorExit(err)
+		if len(args) == 0 {
+			if err := download("all"); err != nil {
+				errorExit(err)
+			}
+			return
 		}
 
-		// downloadDockerImages
-		if err := downloadAndTagDockerImages(machineHardwareName); err != nil {
-			errorExit(err)
+		for _, arg := range args {
+			if err := download(arg); err != nil {
+				errorExit(err)
+			}
 		}
-
-		// TODO: Go should be installed. Maybe serve this as a warning
-		// TODO: NodeJS is also a prerequisite, warning maybe
-		// TODO: Leave a message that windows is not currently supoorted, but we should try and install windows-build-tools
-		// according to the docs
-
 	},
 }
 
 func init() {
+	// download setup and getting system architecture and machine hardware.
+	arch := runtime.GOOS + "-" + runtime.GOARCH
+	platformBinariesURL = fmt.Sprintf("%s/%s-%s/hyperledger-fabric-%s-%s.tar.gz", PlatformBinariesURL, arch, FabricVersion, arch, FabricVersion)
+
 	rootCmd.AddCommand(downloadCmd)
 
 	// Here you will define your flags and configuration settings.
@@ -130,66 +110,91 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// downloadCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// downloadCmd.Flags().BoolP("binaries", "b", false, "Specifies whether to download platform binaries only")
+	// downloadCmd.Flags().BoolP("images", "i", false, "Specifies whether to download docker images only")
 }
 
-func dockerInstalled() error {
+func download(arg string) error {
+	// ahm, seems like there should be a fallthrough somewhere
+	switch arg {
+	case "all":
+		if err := downloadDockerImages(); err != nil {
+			return err
+		}
+
+		if err := downloadPlatformBinaries(); err != nil {
+			return err
+		}
+
+		if err := downloadSamples(); err != nil {
+			return err
+		}
+	case "images":
+		if err := downloadDockerImages(); err != nil {
+			return err
+		}
+	case "binaries":
+		if err := downloadPlatformBinaries(); err != nil {
+			return err
+		}
+	case "samples":
+		if err := downloadSamples(); err != nil {
+			return err
+		}
+	default:
+		return errors.New(arg + " is not a valid argument")
+	}
+	return nil
+}
+
+func downloadDockerImages() error {
+	// wrapper function for all docker related actions
+	color.Blue("Downloading docker images")
+	machineHardwareName, err := getMachineHardwareName()
+	if err != nil {
+		errorExit(err)
+	}
+
 	// check if docker is installed
-	dockerCMD := exec.Command("docker")
-	if err := dockerCMD.Run(); err != nil {
-		return fmt.Errorf("error running docker, please make sure docker is installed: %s", err.Error())
+	if err := docker.Installed(); err != nil {
+		return err
 	}
 
-	// check if docker daemon is running
-	dockerPsCMD := exec.Command("docker", "ps")
-	if err := dockerPsCMD.Run(); err != nil {
-		// Docker error string whenever you run docker ps
-		dockerErrorString := "cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?"
-		return errors.New(dockerErrorString)
-	}
-
-	// check docker version
-	dockerVersionCmdOutput, err := exec.Command("docker", "version", "--format", "{{.Server.Version}}").Output()
+	dockerClient, err := docker.New()
 	if err != nil {
-		return fmt.Errorf("error checking docker version: %s", err.Error())
+		return err
 	}
 
-	dockerSemverCeString := strings.TrimSpace(string(dockerVersionCmdOutput))
-	// get semver // for now we get rid of -ce
-	dockerSemver := dockerSemverCeString[:len(dockerSemverCeString)-3]
-	minimumSemver := MinimumDockerVersion[:len(MinimumDockerVersion)-3]
+	fabricDockerImages := []string{"peer", "orderer", "ccenv", "javaenv", "tools", "ca"}
+	fabricTag := machineHardwareName + "-" + FabricVersion
 
-	requiredDockerVersion, err := correctSemver(minimumSemver, dockerSemver)
-	if err != nil {
-		return fmt.Errorf("error checking docker version: %s", err.Error())
+	if err := dockerClient.DownloadDockerImages(fabricDockerImages, fabricTag); err != nil {
+		return err
 	}
 
-	if !requiredDockerVersion {
-		return fmt.Errorf("error: docker version %s-ce or higher is required", minimumSemver)
+	thirdPartyDockerImages := []string{"couchdb", "kafka", "zookeeper"}
+	thirdPartyTag := machineHardwareName + "-" + ThirdPartyVersionTag
+	if err := dockerClient.DownloadDockerImages(thirdPartyDockerImages, thirdPartyTag); err != nil {
+		return err
 	}
 
-	// check if docker-compose is installed
-	dockerComposeCMDOutput, err := exec.Command("docker-compose", "version", "--short").Output()
-	if err != nil {
-		return fmt.Errorf("error: please make sure docker-compose is installed: %s", err.Error())
-	}
+	color.Green("Successfully downloaded docker images")
 
-	dockerComposeSemverString := strings.TrimSpace(string(dockerComposeCMDOutput))
-
-	// check docker-compose version
-	requiredDockerComposeVersion, err := correctSemver(MinimumDockerComposeVersion, dockerComposeSemverString)
-	if err != nil {
-		return fmt.Errorf("error checking docker-compose version: %s", err.Error())
-	}
-
-	if !requiredDockerComposeVersion {
-		return fmt.Errorf("error: docker-compose version %s or higher is required", MinimumDockerComposeVersion)
-	}
+	// TODO: Go should be installed. Maybe serve this as a warning
+	// TODO: NodeJS is also a prerequisite, warning maybe
+	// TODO: Leave a message that windows is not currently supoorted, but we should try and install windows-build-tools
+	// according to the docs
 
 	return nil
 }
 
-func downloadPlatformBinaries(platformBinariesURL string) error {
+func downloadPlatformBinaries() error {
+	// download Platform Binaries
+	// TODO: @ganga maybe add to path???
+	// TODO: @ganga maybe show progress with uilive
+	// github.com/gosuri/uilive
+	// TODO: @ganga a way to check if platform binaries have been downloaded
+
 	color.Blue("Downloading platform binaries...")
 	res, err := http.Get(platformBinariesURL)
 	if err != nil {
@@ -200,46 +205,7 @@ func downloadPlatformBinaries(platformBinariesURL string) error {
 	return extractTarGz(res.Body)
 }
 
-func downloadAndTagDockerImages(machineHardwareName string) error {
-	fabricDockerImages := []string{"peer", "orderer", "ccenv", "javaenv", "tools", "ca"}
-	thirdPartyDockerImages := []string{"couchdb", "kafka", "zookeeper"}
-
-	cli, err := client.NewEnvClient()
-	if err != nil {
-		panic(err)
-	}
-
-	for _, image := range fabricDockerImages {
-		if err := pullAndTagImage(cli, image, machineHardwareName, FabricVersion); err != nil {
-			return err
-		}
-	}
-
-	for _, image := range thirdPartyDockerImages {
-		if err := pullAndTagImage(cli, image, machineHardwareName, ThirdPartyVersionTag); err != nil {
-			return err
-		}
-	}
-
-	color.Green("Docker images downloaded successfully")
-	return nil
-}
-
-func pullAndTagImage(cli *client.Client, imageName, machineHardwareName, tag string) error {
-	color.Blue("Pulling %s", imageName)
-	imageString := fmt.Sprintf("%s/fabric-%s:%s-%s", HYPERLEDGER, imageName, machineHardwareName, tag)
-
-	_, err := cli.ImagePull(context.Background(), imageString, types.ImagePullOptions{})
-	if err != nil {
-		return err
-	}
-
-	image := fmt.Sprintf("%s/fabric-%s", HYPERLEDGER, imageName)
-
-	if err := cli.ImageTag(context.Background(), imageString, image); err != nil {
-		return err
-	}
-	color.Blue("successfully tagged %s to %s", imageString, image)
-
+func downloadSamples() error {
+	color.Green("Downloading binaries")
 	return nil
 }
