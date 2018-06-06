@@ -8,7 +8,7 @@ An attempt to build a tiny cli to help setting up a hyperledger fabric environme
 
 - [x] Downloading Docker Images
 
-- [x] Download Fabric Samples
+- [ ] Download Fabric Samples
 
 - [ ] Spinning Up an example network
 
