@@ -8,6 +8,8 @@ An attempt to build a tiny cli to help setting up a hyperledger fabric environme
 
 - [x] Downloading Docker Images
 
+- [x] Download Fabric Samples
+
 - [ ] Spinning Up an example network
 
 - [ ] Spinning up a network based on a configs (custom configtx, cryptoconfig)
@@ -16,12 +18,18 @@ An attempt to build a tiny cli to help setting up a hyperledger fabric environme
 
 - [ ] Deploy (maybe)
 
-### Download Prerequisites
+### Setup
 
-This downloads all the prerequisites required to run a hyperledger fabric instance. Includes platform binaries and docker images.
-
-Note that the platform binaries are downloaded to `$HOME/.hlf-cli` (TODO: should be configurable)
+Clone the repository and make sure you have make installed
 
 ```
-go run main.go download -h
+make install
+hlf
+```
+
+#### Download Prerequisites
+**NOTE** samples not yet implemented
+```
+hlf download // this will all images, binaries and samples
+hlf download [images, samples, binaries] // specify what to download e.g hlf download images
 ```
