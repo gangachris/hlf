@@ -10,7 +10,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/fatih/color"
-	"github.com/gangachris/hlf-cli/semver"
+	"github.com/gangachris/hlf/semver"
 )
 
 const (

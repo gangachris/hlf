@@ -20,7 +20,7 @@
 
 package main
 
-import "github.com/gangachris/hlf-cli/cmd"
+import "github.com/gangachris/hlf/cmd"
 
 func main() {
 	cmd.Execute()

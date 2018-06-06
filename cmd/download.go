@@ -27,7 +27,7 @@ import (
 	"runtime"
 
 	"github.com/fatih/color"
-	"github.com/gangachris/hlf-cli/docker"
+	"github.com/gangachris/hlf/docker"
 	"github.com/spf13/cobra"
 )
 

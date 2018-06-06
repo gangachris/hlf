@@ -7,7 +7,7 @@ BUILD_SHA=$(shell git rev-parse HEAD)
 LLDB_SERVER=$(shell which lldb-server)
 
 ifeq "$(UNAME)" "Darwin"
-    BUILD_FLAGS=-ldflags="-i -o hlf -s -X main.Build=$(BUILD_SHA)"
+    BUILD_FLAGS=-ldflags="-s -X main.Build=$(BUILD_SHA)"
 else
     BUILD_FLAGS=-ldflags="-X main.Build=$(BUILD_SHA)"
 endif
@@ -31,4 +31,4 @@ endif
 
 
 install:
-	go build $(BUILD_FLAGS) github.com/gangachris/hlf
+	go install $(BUILD_FLAGS) github.com/gangachris/hlf
